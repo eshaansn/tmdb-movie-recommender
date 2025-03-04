@@ -2,9 +2,10 @@ import streamlit as st
 import  pickle
 import  pandas as pd
 import  requests
+from omegaconf import OmegaConf
 
 def fetch_poster(movie_id):
-    api_key = 'bd0026216d6baaf964895dfe9b364180'
+    api_key = '<API_KEY>'
     response = requests.get(f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}")
     data = response.json()
     print(data)
@@ -32,7 +33,7 @@ def recommend(option, n, df, similarity):
             top_n_posters.append(fetch_poster(df.iloc[movie_idx[0]].id))
         else:
             break
-
+        
     st.write(f'Here are {n} movies that are most similar to {option}')
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
@@ -59,14 +60,13 @@ similarity = pickle.load(open('data/similarity.pkl', 'rb'))
 
 list_of_movies = movies.title.values
 
-st.title('Movie Recommender System')
+if __name__ == '__main__':
+    st.title('Movie Recommender System')
 
+    option = st.selectbox(
+        'List of movies present in our database...',
+        list_of_movies)
 
-
-option = st.selectbox(
-    'List of movies present in our database...',
-    list_of_movies)
-
-n=5
-if st.button('Recommend'):
-    recommend(option, n, movies, similarity)
+    n=5
+    if st.button('Recommend'):
+        recommend(option, n, movies, similarity)

@@ -1,0 +1,10 @@
+data:
+  movies_file_path: ./data/tmdb_5000_movies.csv 
+  credits_file_path: ./data/tmdb_5000_credits.csv
+  pr_data_save_path: ./data/movies.pkl
+  features_save_path: ./data/vectors.pkl
+  similarity_save_path: ./data/similarity.pkl
+
+features:
+  vectorizer: tfidf-vectorizer
+  
