@@ -53,6 +53,8 @@ def prepare_data(config):
 
     df = data[['id', 'title', 'genres', 'keywords', 'overview', 'cast', 'crew']]
 
+    df = df.drop_duplicates(subset=["id"])
+
     df.dropna(inplace=True)
 
     df['genres'] = df['genres'].apply(reformat)
@@ -72,12 +74,13 @@ def prepare_data(config):
     df['tags'] = df['tags'].apply(lambda x: " ".join(x))
     df['tags'] = df['tags'].apply(lambda x: x.lower())
 
-    prepped_df = df[['id', 'title', 'tags']]
+    prepped_df_unstemmed = df[['id', 'title', 'tags']]
 
-    prepped_df['tags'] = prepped_df['tags'].apply(stem)
+    df['tags'] = prepped_df_unstemmed['tags'].apply(stem)
 
-    print(prepped_df.head())
-    pickle.dump(prepped_df.to_dict(), open(config.data.pr_data_save_path, 'wb'))
+    print(df.head())
+    pickle.dump(df.to_dict(), open(config.data.pr_data_save_path, 'wb'))
+    pickle.dump(prepped_df_unstemmed.to_dict(), open(config.data.pr_data_unstemmed_save_path, 'wb'))
 
 
 if __name__ == '__main__':

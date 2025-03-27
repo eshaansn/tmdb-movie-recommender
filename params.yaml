@@ -2,9 +2,14 @@ data:
   movies_file_path: ./data/tmdb_5000_movies.csv 
   credits_file_path: ./data/tmdb_5000_credits.csv
   pr_data_save_path: ./data/movies.pkl
+  pr_data_unstemmed_save_path: ./data/movies_unstemmed.pkl
   features_save_path: ./data/vectors.pkl
   similarity_save_path: ./data/similarity.pkl
+  documentstore: ./data/.chroma_db
 
-features:
-  vectorizer: tfidf-vectorizer
+task:
+  use_llms:
+    features: ???
+  create_vetcors:
+    vectorizer: tfidf-vectorizer
   

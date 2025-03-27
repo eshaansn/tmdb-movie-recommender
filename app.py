@@ -3,6 +3,12 @@ import  pickle
 import  pandas as pd
 import  requests
 from omegaconf import OmegaConf
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+api_key = os.getenv("TMDB_API_KEY")
+
 
 def fetch_poster(movie_id):
     api_key = '<API_KEY>'
