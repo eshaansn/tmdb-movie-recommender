@@ -1,0 +1,4 @@
+[core]
+    remote = xor_database
+['remote "xor_database"']
+    url = gdrive://1klgTRMBDk1wpS8QTE9NpKFyRMtqRAAC0

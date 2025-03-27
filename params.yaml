@@ -1,15 +1,20 @@
 data:
   movies_file_path: ./data/tmdb_5000_movies.csv 
   credits_file_path: ./data/tmdb_5000_credits.csv
-  pr_data_save_path: ./data/movies.pkl
-  pr_data_unstemmed_save_path: ./data/movies_unstemmed.pkl
-  features_save_path: ./data/vectors.pkl
-  similarity_save_path: ./data/similarity.pkl
-  documentstore: ./data/.chroma_db
-
-task:
-  use_llms:
-    features: ???
-  create_vetcors:
-    vectorizer: tfidf-vectorizer
+  pr_data_save_path:  ./out_data/movies.pkl
+  pr_data_unstemmed_save_path: ./out_data/movies_unstemmed.pkl
   
+
+features:
+  similarity_save_path: ./out_data/similarity.pkl
+  documentstore: ./out_data/.chroma_db
+  selected_method: A
+  methods:
+    A: use_llm_embeddings
+    B: create_vectors
+  method: ${features.methods.${features.selected_method}}
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  vectorizer: tfidf-vectorizer
+  
+app:
+  method: ${features.method}

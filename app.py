@@ -5,16 +5,15 @@ import  requests
 from omegaconf import OmegaConf
 from dotenv import load_dotenv
 import os
-
-load_dotenv()
-api_key = os.getenv("TMDB_API_KEY")
+import hydra
 
 
 def fetch_poster(movie_id):
-    api_key = '<API_KEY>'
+    load_dotenv()
+    api_key = os.getenv("TMDB_API_KEY")
     response = requests.get(f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}")
     data = response.json()
-    print(data)
+    # print(data)
     # if not data['success']:
     #     return -1
     # else:
@@ -24,21 +23,46 @@ def fetch_poster(movie_id):
 
 
 
-def recommend(option, n, df, similarity):
-    ix = df[df['title'] == option].index[0]
-    distances = similarity[ix]
-    list_of_recommendations = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:]
+def recommend(config, option, n, df, db=None):
+    
+    if config.app.method == 'use_llm_embeddings':
 
-    counter = 1
-    top_n = []
-    top_n_posters = []
-    for movie_idx in list_of_recommendations:
-        if counter < n + 1:
-            counter += 1
-            top_n.append(df.iloc[movie_idx[0]].title)
-            top_n_posters.append(fetch_poster(df.iloc[movie_idx[0]].id))
-        else:
-            break
+        ix = df[df['title'] == option].index[0]
+
+        j = db.similarity_search_with_score(query=df.iloc[ix, -1], k=n+1)
+        k = pd.DataFrame(j)
+        k.iloc[:, 0] = k.iloc[:, 0].apply(lambda x: int(str(x).split("=")[1].split()[0].strip("'")))
+        list_of_recommendations = k.set_index(keys=0).T.iloc[:, 1:].to_dict(orient='records')[0]
+
+        counter = 1
+        top_n = []
+        top_n_posters = []
+        for movie_idx in list_of_recommendations.keys():
+            if counter < n + 1:
+                counter += 1
+                top_n.append(df[df['id'] == movie_idx].title.values[0])
+                top_n_posters.append(fetch_poster(df[df['id'] == movie_idx].id.values[0]))
+            else:
+                break
+    
+    if config.app.method == 'create_vectors':
+        ix = df[df['title'] == option].index[0]
+        similarity = pickle.load(open(config.features.similarity_save_path, 'rb'))
+        distances = similarity[ix]
+        list_of_recommendations = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:]
+
+        counter = 1
+        top_n = []
+        top_n_posters = []
+        for movie_idx in list_of_recommendations:
+            if counter < n + 1:
+                counter += 1
+                top_n.append(df.iloc[movie_idx[0]].title)
+                top_n_posters.append(fetch_poster(df.iloc[movie_idx[0]].id))
+            else:
+                break
+    
+    
         
     st.write(f'Here are {n} movies that are most similar to {option}')
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -58,15 +82,27 @@ def recommend(option, n, df, similarity):
         st.text(top_n[4])
         st.image(top_n_posters[4])
 
+def main(config):
 
-movies = pickle.load(open('data/movies.pkl', 'rb'))
-movies = pd.DataFrame(movies)
+    if config.app.method == 'use_llm_embeddings':
 
-similarity = pickle.load(open('data/similarity.pkl', 'rb'))
+        from langchain_chroma  import Chroma
+        from langchain_huggingface import HuggingFaceEmbeddings
 
-list_of_movies = movies.title.values
+        persist_dir = config.features.documentstore 
+        if os.path.exists(persist_dir) and os.listdir(persist_dir): 
+            embedding_model = HuggingFaceEmbeddings(model_name=config.features.model_name)
+            print("Loading existing Chroma database...")
+            db_movies = Chroma(
+                collection_name='TMDB5000',
+                persist_directory=persist_dir,
+                embedding_function=embedding_model,
+            )
 
-if __name__ == '__main__':
+    movies = pickle.load(open(config.data.pr_data_save_path, 'rb'))
+    movies = pd.DataFrame(movies)
+    list_of_movies = movies.title.values
+
     st.title('Movie Recommender System')
 
     option = st.selectbox(
@@ -75,4 +111,8 @@ if __name__ == '__main__':
 
     n=5
     if st.button('Recommend'):
-        recommend(option, n, movies, similarity)
+        recommend(config, option, n, movies, db_movies)
+
+if __name__ == '__main__':
+    config = OmegaConf.load("./params.yaml")
+    main(config)

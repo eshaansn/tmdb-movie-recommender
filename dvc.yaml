@@ -1,0 +1,33 @@
+stages:
+  prepare_data:
+    cmd: python ./prepare_data.py
+    deps:
+      - ./prepare_data.py
+      - ./data/tmdb_5000_movies.csv 
+      - ./data/tmdb_5000_credits.csv
+    params:
+      - data
+    outs:
+      - ./out_data/movies.pkl
+      - ./out_data/movies_unstemmed.pkl
+    
+  make_features:
+    cmd: python ./make_features.py
+    deps:
+      - ./make_features.py
+      - ./out_data/movies.pkl
+      - ./out_data/movies_unstemmed.pkl
+    params:
+      - features
+    outs:
+      - ./out_data/.chroma_db
+
+  app:
+    cmd: python -m streamlit run app.py
+    deps:
+      - ./app.py
+      - ./out_data/.chroma_db
+    params:
+      - app
+    
+

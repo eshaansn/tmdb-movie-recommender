@@ -1,0 +1,66 @@
+schema: '2.0'
+stages:
+  prepare_data:
+    cmd: python ./prepare_data.py
+    deps:
+    - path: ./data/tmdb_5000_credits.csv
+      hash: md5
+      md5: 6c5e0e12bfbc527697d7977d86b97ed4
+      size: 40044293
+    - path: ./data/tmdb_5000_movies.csv
+      hash: md5
+      md5: 64346a71897b5741d553d34b86088603
+      size: 5698602
+    - path: ./prepare_data.py
+      hash: md5
+      md5: 0ca534ebf2e5fb72c6e45e6e23c8b929
+      size: 2562
+    params:
+      params.yaml:
+        data:
+          movies_file_path: ./data/tmdb_5000_movies.csv
+          credits_file_path: ./data/tmdb_5000_credits.csv
+          pr_data_save_path: ./out_data/movies.pkl
+          pr_data_unstemmed_save_path: ./out_data/movies_unstemmed.pkl
+    outs:
+    - path: ./out_data/movies.pkl
+      hash: md5
+      md5: 1ae5bceb17fc7b43ef657a18143d4add
+      size: 5218844
+    - path: ./out_data/movies_unstemmed.pkl
+      hash: md5
+      md5: d4d5015a4f5f124ef657f4bc003981ed
+      size: 2368915
+  make_features:
+    cmd: python ./make_features.py
+    deps:
+    - path: ./make_features.py
+      hash: md5
+      md5: 32d2c7eb53ecd41d5cce38a6b0082c05
+      size: 2822
+    - path: ./out_data/movies.pkl
+      hash: md5
+      md5: 1ae5bceb17fc7b43ef657a18143d4add
+      size: 5218844
+    - path: ./out_data/movies_unstemmed.pkl
+      hash: md5
+      md5: d4d5015a4f5f124ef657f4bc003981ed
+      size: 2368915
+    params:
+      params.yaml:
+        features:
+          similarity_save_path: ./out_data/similarity.pkl
+          documentstore: ./out_data/.chroma_db
+          selected_method: A
+          methods:
+            A: use_llm_embeddings
+            B: create_vectors
+          method: ${features.methods.${features.selected_method}}
+          model_name: sentence-transformers/all-MiniLM-L6-v2
+          vectorizer: tfidf-vectorizer
+    outs:
+    - path: ./out_data/.chroma_db
+      hash: md5
+      md5: 3f202799b5871329e120002b30324637.dir
+      size: 40230727
+      nfiles: 6
